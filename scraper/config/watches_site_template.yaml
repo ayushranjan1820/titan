@@ -1,0 +1,95 @@
+# Example configuration for scraping watches from an e-commerce site
+# This is a TEMPLATE - adapt selectors to match your target site
+
+site_name: "Example Watch Store"
+category: "watches"
+
+# Starting URLs (listing pages)
+start_urls:
+  - "https://example-watches.com/collections/all-watches"
+  # - "https://example-watches.com/collections/mens-watches"
+  # - "https://example-watches.com/collections/womens-watches"
+
+# Pagination strategy
+pagination:
+  type: "url_param"  # Options: url_param, next_button, load_more
+  param_name: "page"  # For url_param type
+  max_pages: 20
+  # next_button_selector: "a.next-page"  # For next_button type
+  # load_more_selector: "button.load-more"  # For load_more type
+
+# Rate limiting (be respectful!)
+rate_limit:
+  requests_per_second: 2
+  delay_between_pages: 1.0  # seconds
+
+# CSS Selectors for product listing pages
+selectors:
+  # Selector to find product links on listing pages
+  product_links: "div.product-card a.product-link"
+  
+  # Selectors for product detail pages
+  product_detail:
+    name: "h1.product-title"
+    description: "div.product-description p"
+    price: "span.price-value"
+    currency: "span.currency"  # Optional
+    brand: "span.brand-name"
+    
+    # Category/classification
+    category: "nav.breadcrumb li:nth-child(2) a"
+    sub_category: "nav.breadcrumb li:nth-child(3) a"
+    
+    # Attributes specific to watches
+    attributes:
+      gender: "span[data-attr='gender']"
+      style: "span[data-attr='style']"
+      material: "span[data-attr='material']"
+      strap_type: "span[data-attr='strap']"
+      dial_color: "span[data-attr='dial-color']"
+      movement: "span[data-attr='movement']"
+      water_resistance: "span[data-attr='water-resistance']"
+      case_diameter: "span[data-attr='case-diameter']"
+    
+    # Features (comma-separated or list)
+    features: "ul.features li"
+    
+    # Images
+    image_url: "img.product-image::attr(src)"
+    image_urls_all: "div.product-gallery img::attr(src)"  # Multiple images
+    
+    # Product URL is captured automatically from the link
+
+# Data extraction options
+extraction:
+  # Clean text (remove extra whitespace, newlines)
+  clean_text: true
+  
+  # Extract multiple values where applicable
+  extract_all_images: true
+  
+  # Convert price to float
+  parse_price: true
+  
+  # Default currency if not found
+  default_currency: "INR"
+
+# Browser options (if using Playwright/Selenium)
+browser:
+  # Set to true if site requires JavaScript rendering
+  use_browser: false
+  headless: true
+  timeout: 30  # seconds
+  wait_for_selector: "div.product-card"  # Wait for this before scraping
+
+# Output options
+output:
+  format: "json"  # json, jsonl, csv
+  pretty_print: true
+  
+# Error handling
+error_handling:
+  max_retries: 3
+  retry_delay: 2  # seconds
+  skip_on_error: true  # Continue even if a product fails
+  log_errors: true

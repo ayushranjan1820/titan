@@ -1,0 +1,31 @@
+# Backend Dependencies
+
+# Web framework
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+
+# Data validation
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+
+# HTTP client (for making external API calls)
+httpx>=0.25.0
+
+# Environment variables
+python-dotenv>=1.0.0
+
+# Optional: LLM integrations
+openai>=1.3.0
+google-generativeai>=0.3.0
+
+# Optional: Vector database (for RAG)
+# faiss-cpu>=1.7.4
+# qdrant-client>=1.6.0
+
+# Optional: Database
+# sqlalchemy>=2.0.0
+# alembic>=1.12.0
+
+# Development
+pytest>=7.4.0
+pytest-asyncio>=0.21.0

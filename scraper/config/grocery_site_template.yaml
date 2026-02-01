@@ -1,0 +1,77 @@
+# Example configuration for scraping grocery products
+# Demonstrates generalization to non-watch categories
+
+site_name: "Example Grocery Store"
+category: "grocery"
+
+# Starting URLs
+start_urls:
+  - "https://example-grocery.com/products/all"
+
+# Pagination
+pagination:
+  type: "url_param"
+  param_name: "page"
+  max_pages: 10
+
+# Rate limiting
+rate_limit:
+  requests_per_second: 2
+  delay_between_pages: 1.0
+
+# Selectors
+selectors:
+  product_links: "div.product-item a.product-link"
+  
+  product_detail:
+    name: "h1.product-name"
+    description: "div.product-description"
+    price: "span.price"
+    currency: "span.currency"
+    brand: "span.brand"
+    
+    # Category
+    category: "nav.breadcrumb li:nth-child(2)"
+    sub_category: "nav.breadcrumb li:nth-child(3)"
+    
+    # Grocery-specific attributes
+    attributes:
+      weight: "span[data-attr='weight']"
+      unit: "span[data-attr='unit']"
+      organic: "span[data-attr='organic']"
+      brand_category: "span[data-attr='category']"  # e.g., Dairy, Snacks, Beverages
+      shelf_life: "span[data-attr='shelf-life']"
+      ingredients: "div.ingredients"
+      nutritional_info: "div.nutrition-facts"
+    
+    # Features (e.g., "Gluten Free", "Low Fat")
+    features: "ul.product-tags li"
+    
+    # Images
+    image_url: "img.main-product-image::attr(src)"
+    image_urls_all: "div.gallery img::attr(src)"
+
+# Extraction options
+extraction:
+  clean_text: true
+  extract_all_images: true
+  parse_price: true
+  default_currency: "INR"
+
+# Browser options (in case JavaScript is needed)
+browser:
+  use_browser: false
+  headless: true
+  timeout: 30
+
+# Output
+output:
+  format: "json"
+  pretty_print: true
+
+# Error handling
+error_handling:
+  max_retries: 3
+  retry_delay: 2
+  skip_on_error: true
+  log_errors: true

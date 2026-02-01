@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Try-On - Standalone</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #1a1a1a;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 24px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            opacity: 0.9;
+        }
+
+        .container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 32px;
+        }
+
+        .video-wrapper {
+            position: relative;
+            max-width: 100%;
+        }
+
+        #video {
+            display: none;
+        }
+
+        #canvas {
+            max-width: 100%;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+
+        .status {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .instructions {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 16px 24px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top-color: white;
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>👁️ Virtual Try-On</h1>
+        <p>Position your wrist in front of the camera</p>
+    </div>
+
+    <div class="container">
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Initializing camera and hand detection...</p>
+        </div>
+
+        <div class="video-wrapper" id="videoWrapper" style="display: none;">
+            <video id="video" autoplay playsinline></video>
+            <canvas id="canvas"></canvas>
+
+            <div class="status" id="status">
+                👋 Initializing...
+            </div>
+
+            <div class="instructions">
+                <p><strong>Hold your wrist in front of the camera</strong></p>
+                <p style="font-size: 12px; opacity: 0.8; margin-top: 4px;">
+                    The watch will automatically overlay on your wrist
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MediaPipe Hands -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+
+    <script>
+        // Configuration
+        const WATCH_IMAGE_URL = 'https://via.placeholder.com/300x300/667eea/ffffff?text=Watch';
+
+        // Initialize
+        let video, canvas, ctx;
+        let hands, camera;
+        let watchImage = new Image();
+        let handsDetected = false;
+
+        async function init() {
+            video = document.getElementById('video');
+            canvas = document.getElementById('canvas');
+            ctx = canvas.getContext('2d');
+
+            // Load watch image
+            watchImage.crossOrigin = 'anonymous';
+            watchImage.src = WATCH_IMAGE_URL;
+
+            try {
+                // Request camera
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: 1280, height: 720, facingMode: 'user' }
+                });
+
+                video.srcObject = stream;
+
+                video.onloadedmetadata = () => {
+                    video.play();
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('videoWrapper').style.display = 'block';
+
+                    // Initialize MediaPipe
+                    initMediaPipe();
+                };
+
+            } catch (err) {
+                document.getElementById('loading').innerHTML =
+                    `<p style="color: #ff6b6b;">❌ Camera access failed: ${err.message}</p>
+                     <p style="font-size: 14px; margin-top: 16px;">Please grant camera permissions and refresh.</p>`;
+            }
+        }
+
+        function initMediaPipe() {
+            hands = new Hands({
+                locateFile: (file) => {
+                    return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+                }
+            });
+
+            hands.setOptions({
+                maxNumHands: 2,
+                modelComplexity: 1,
+                minDetectionConfidence: 0.5,
+                minTrackingConfidence: 0.5
+            });
+
+            hands.onResults(onResults);
+
+            // Process frames
+            processFrame();
+        }
+
+        async function processFrame() {
+            if (video.readyState === 4) {
+                await hands.send({ image: video });
+            }
+            requestAnimationFrame(processFrame);
+        }
+
+        function onResults(results) {
+            // Update canvas size
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+
+            // Draw video
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Process hands
+            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                handsDetected = true;
+                updateStatus('✋ Hand detected!');
+
+                for (const landmarks of results.multiHandLandmarks) {
+                    overlayWatch(landmarks);
+                }
+            } else {
+                handsDetected = false;
+                updateStatus('👋 No hand detected');
+            }
+        }
+
+        function overlayWatch(landmarks) {
+            // Wrist position (landmark 0)
+            const wrist = landmarks[0];
+            const middleFingerBase = landmarks[9];
+
+            const wristX = wrist.x * canvas.width;
+            const wristY = wrist.y * canvas.height;
+            const middleX = middleFingerBase.x * canvas.width;
+            const middleY = middleFingerBase.y * canvas.height;
+
+            // Calculate size and rotation
+            const handSize = Math.sqrt(
+                Math.pow(middleX - wristX, 2) + Math.pow(middleY - wristY, 2)
+            );
+            const watchSize = handSize * 1.2;
+            const angle = Math.atan2(middleY - wristY, middleX - wristX);
+
+            // Draw watch
+            ctx.save();
+            ctx.translate(wristX, wristY);
+            ctx.rotate(angle + Math.PI / 2);
+            ctx.globalAlpha = 0.9;
+            ctx.drawImage(
+                watchImage,
+                -watchSize / 2,
+                -watchSize / 2,
+                watchSize,
+                watchSize
+            );
+            ctx.restore();
+        }
+
+        function updateStatus(text) {
+            document.getElementById('status').textContent = text;
+        }
+
+        // Start on page load
+        window.addEventListener('load', init);
+    </script>
+</body>
+
+</html>

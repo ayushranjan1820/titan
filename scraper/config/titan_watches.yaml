@@ -1,0 +1,79 @@
+# Configuration for scraping Titan watches
+# Real configuration for Titan watch e-commerce site
+
+site_name: "Titan Watches"
+category: "watches"
+
+# Starting URLs (listing pages)
+start_urls:
+  - "https://www.titan.co.in/collections/all-watches"
+
+# Pagination strategy
+pagination:
+  type: "url_param"
+  param_name: "page"
+  max_pages: 5  # Limit to 5 pages for initial scrape
+
+# Rate limiting (be respectful!)
+rate_limit:
+  requests_per_second: 1
+  delay_between_pages: 2.0  # seconds
+
+# CSS Selectors for product listing pages
+selectors:
+  # Selector to find product links on listing pages
+  product_links: "div.product-item a.product-link, a.product-card-link, div.product-card a[href*='/products/']"
+  
+  # Selectors for product detail pages
+  product_detail:
+    name: "h1.product-title, h1.product__title, h1[itemprop='name']"
+    description: "div.product-description, div.product__description, div[itemprop='description']"
+    price: "span.price, span.product-price, span[itemprop='price'], span.money"
+    currency: "meta[itemprop='priceCurrency']::attr(content)"
+    brand: "span.brand-name, a.brand-link"
+    
+    # Category/classification
+    category: "nav.breadcrumb li:nth-child(2) a, nav.breadcrumbs li:nth-child(2) a"
+    sub_category: "nav.breadcrumb li:nth-child(3) a, nav.breadcrumbs li:nth-child(3) a"
+    
+    # Attributes specific to watches
+    attributes:
+      gender: "span.gender, div.product-meta span:contains('Gender'), td:contains('Gender') + td"
+      style: "span.style, div.product-meta span:contains('Style'), td:contains('Style') + td"
+      material: "span.material, div.product-meta span:contains('Material'), td:contains('Material') + td"
+      strap_type: "span.strap, div.product-meta span:contains('Strap'), td:contains('Strap') + td"
+      dial_color: "span.dial-color, div.product-meta span:contains('Dial'), td:contains('Dial') + td"
+      movement: "span.movement, div.product-meta span:contains('Movement'), td:contains('Movement') + td"
+      water_resistance: "span.water-resistance, div.product-meta span:contains('Water'), td:contains('Water') + td"
+    
+    # Features (comma-separated or list)
+    features: "ul.features li, ul.product-features li, div.features li"
+    
+    # Images
+    image_url: "img.product-image::attr(src), img.product__image::attr(src), img[itemprop='image']::attr(src)"
+    image_urls_all: "div.product-gallery img::attr(src), div.product-images img::attr(src)"
+
+# Data extraction options
+extraction:
+  clean_text: true
+  extract_all_images: true
+  parse_price: true
+  default_currency: "INR"
+
+# Browser options
+browser:
+  use_browser: false
+  headless: true
+  timeout: 30
+
+# Output options
+output:
+  format: "json"
+  pretty_print: true
+
+# Error handling
+error_handling:
+  max_retries: 3
+  retry_delay: 2
+  skip_on_error: true
+  log_errors: true

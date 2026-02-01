@@ -1,0 +1,254 @@
+/* VirtualTryOn Styles */
+
+.virtual-tryon-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #1a1a1a;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header */
+.tryon-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 20px 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: white;
+}
+
+.tryon-header h2 {
+    margin: 0;
+    font-size: 24px;
+}
+
+.close-button {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.close-button:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Product Info Bar */
+.product-info-bar {
+    background: white;
+    padding: 16px 32px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.product-thumb {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.product-info-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.product-info-text strong {
+    color: #333;
+    font-size: 14px;
+}
+
+.product-info-text span {
+    color: #2563eb;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+/* Main Content */
+.tryon-content {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+    background: #1a1a1a;
+}
+
+/* State Messages */
+.tryon-state {
+    text-align: center;
+    color: white;
+}
+
+.tryon-state .spinner {
+    width: 60px;
+    height: 60px;
+    border: 4px solid rgba(255, 255, 255, 0.1);
+    border-top-color: white;
+    border-radius: 50%;
+    margin: 0 auto 24px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.tryon-state p {
+    font-size: 16px;
+    margin: 8px 0;
+}
+
+.tryon-state.error p {
+    color: #ff6b6b;
+}
+
+.error-hint {
+    color: #aaa !important;
+    font-size: 14px !important;
+    margin-top: 16px !important;
+}
+
+.btn {
+    margin-top: 24px;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-primary {
+    background: #2563eb;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #1d4ed8;
+}
+
+/* Video Container */
+.video-container {
+    position: relative;
+    max-width: 100%;
+    max-height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.render-canvas {
+    max-width: 100%;
+    max-height: calc(100vh - 200px);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+/* Status Indicators */
+.status-indicator {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.status-badge {
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+}
+
+.status-badge.active {
+    background: rgba(34, 197, 94, 0.8);
+    border-color: rgba(34, 197, 94, 1);
+}
+
+/* Instructions */
+.instructions {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 16px 24px;
+    border-radius: 12px;
+    text-align: center;
+    max-width: 90%;
+}
+
+.instructions p {
+    margin: 4px 0;
+    font-size: 14px;
+}
+
+.instruction-hint {
+    font-size: 12px !important;
+    color: #aaa !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .tryon-header {
+        padding: 16px 20px;
+    }
+
+    .tryon-header h2 {
+        font-size: 20px;
+    }
+
+    .product-info-bar {
+        padding: 12px 20px;
+    }
+
+    .tryon-content {
+        padding: 16px;
+    }
+
+    .render-canvas {
+        max-height: calc(100vh - 180px);
+    }
+
+    .status-indicator {
+        top: 12px;
+        left: 12px;
+    }
+
+    .status-badge {
+        font-size: 11px;
+        padding: 6px 12px;
+    }
+
+    .instructions {
+        bottom: 12px;
+        padding: 12px 16px;
+    }
+
+    .instructions p {
+        font-size: 12px;
+    }
+}

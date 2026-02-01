@@ -1,0 +1,17 @@
+# Scraper Dependencies
+
+# HTTP client
+httpx>=0.25.0
+
+# HTML parsing
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
+
+# Configuration
+pyyaml>=6.0
+
+# Optional: Browser automation (if needed for JS-heavy sites)
+playwright>=1.40.0
+
+# Utilities
+python-dotenv>=1.0.0
