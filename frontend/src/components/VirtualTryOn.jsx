@@ -1,14 +1,14 @@
 import React, { useRef, useEffect, useState } from 'react';
 import './VirtualTryOn.css';
+import Watch3DRenderer from './Watch3DRenderer';
 
 /**
  * VirtualTryOn Component
  * Uses MediaPipe Hands for wrist detection and overlays watch image
  * 
- * NOTE: This is a POC implementation. For production:
- * - Use proper 3D models instead of 2D overlays
- * - Implement more sophisticated scaling and rotation
- * - Add multiple camera angles support
+ * Supports both 2D image overlay and 3D model rendering:
+ * - 2D: Fast, works with all products (legacy)
+ * - 3D: Realistic strap wrapping, occlusion, lighting (selected products)
  */
 function VirtualTryOn({ product, onClose }) {
     const videoRef = useRef(null);
@@ -18,6 +18,10 @@ function VirtualTryOn({ product, onClose }) {
     const [cameraActive, setCameraActive] = useState(false);
     const [handsDetected, setHandsDetected] = useState(false);
     const [watchImageLoaded, setWatchImageLoaded] = useState(false);
+
+    // 3D rendering state
+    const [use3DRendering, setUse3DRendering] = useState(false);
+    const [currentLandmarks, setCurrentLandmarks] = useState(null);
 
     // MediaPipe Hands instance
     const handsRef = useRef(null);
@@ -57,6 +61,17 @@ function VirtualTryOn({ product, onClose }) {
                 setWatchImageLoaded(false);
             };
             img.src = product.image_url;
+        }
+    }, [product]);
+
+    // Determine if we should use 3D rendering for this product
+    useEffect(() => {
+        if (product?.has3DModel && product?.model3D) {
+            console.log('🎨 3D model available for this product:', product.model3D);
+            setUse3DRendering(true);
+        } else {
+            console.log('📷 Using 2D image overlay for this product');
+            setUse3DRendering(false);
         }
     }, [product]);
 
@@ -164,15 +179,21 @@ function VirtualTryOn({ product, onClose }) {
         if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
             setHandsDetected(true);
 
+            // Store current landmarks for 3D renderer
+            setCurrentLandmarks(results.multiHandLandmarks[0]); // Use first detected hand
+
             for (const landmarks of results.multiHandLandmarks) {
                 // Draw hand landmarks (optional - for debugging)
                 // drawHandLandmarks(ctx, landmarks);
 
-                // Overlay watch on wrist
-                overlayWatch(ctx, landmarks);
+                // Only overlay 2D watch if not using 3D rendering
+                if (!use3DRendering) {
+                    overlayWatch(ctx, landmarks);
+                }
             }
         } else {
             setHandsDetected(false);
+            setCurrentLandmarks(null);
         }
 
         ctx.restore();
@@ -216,25 +237,32 @@ function VirtualTryOn({ product, onClose }) {
         const pinkyX = pinkyBase.x * ctx.canvas.width;
         const pinkyY = pinkyBase.y * ctx.canvas.height;
 
-        // Calculate hand width (index to pinky distance)
+        // Calculate hand width (index to pinky distance) - this represents the width of the hand
         const handWidth = Math.sqrt(
             Math.pow(pinkyX - indexX, 2) + Math.pow(pinkyY - indexY, 2)
         );
 
-        // Calculate hand orientation - average of index and middle finger bases
-        const handCenterX = (indexX + pinkyX) / 2;
-        const handCenterY = (indexY + pinkyY) / 2;
+        // Calculate the knuckle center point (between index and pinky)
+        const knuckleCenterX = (indexX + pinkyX) / 2;
+        const knuckleCenterY = (indexY + pinkyY) / 2;
 
-        // Calculate rotation angle based on hand orientation
-        const angle = Math.atan2(handCenterY - wristY, handCenterX - wristX);
+        // NEW APPROACH: Calculate the angle of the FOREARM (wrist to knuckles)
+        // This represents the direction of the arm, not the hand width
+        const forearmAngle = Math.atan2(knuckleCenterY - wristY, knuckleCenterX - wristX);
 
-        // Watch size should be proportional to hand width (watches are typically 40-45mm, hand width ~70-90mm)
-        const watchSize = handWidth * 0.55;
+        // Watch should be PERPENDICULAR to the forearm direction
+        // A watch naturally sits across the wrist, perpendicular to the arm
+        const watchRotation = forearmAngle;
 
-        // Position watch slightly above the actual wrist point for better visual alignment
-        const watchOffsetDistance = watchSize * 0.15;
-        const watchX = wristX + Math.cos(angle) * watchOffsetDistance;
-        const watchY = wristY + Math.sin(angle) * watchOffsetDistance;
+        // INCREASED watch size - real watches typically span 80-90% of wrist width
+        // Using 0.85x hand width for a more realistic, visible watch
+        const watchSize = handWidth * 0.85;
+
+        // Position watch at the wrist point, slightly adjusted along the forearm direction
+        // This makes the watch sit naturally on the wrist area
+        const watchOffsetDistance = watchSize * 0.1;
+        const watchX = wristX + Math.cos(forearmAngle) * watchOffsetDistance;
+        const watchY = wristY + Math.sin(forearmAngle) * watchOffsetDistance;
 
         // Create a temporary canvas for processing the watch image (remove white background)
         if (!window.watchProcessedCanvas) {
@@ -276,9 +304,12 @@ function VirtualTryOn({ product, onClose }) {
         // Draw shadow for depth effect
         ctx.save();
         ctx.translate(watchX, watchY);
-        ctx.rotate(angle + Math.PI / 2);
 
-        // Shadow
+        // KEY CHANGE: Watch rotates to be PERPENDICULAR to arm direction
+        // Add 90 degrees (Math.PI/2) to make watch face perpendicular to forearm
+        ctx.rotate(watchRotation + Math.PI / 2);
+
+        // Shadow for 3D depth
         ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
         ctx.shadowBlur = 10;
         ctx.shadowOffsetX = 3;
@@ -410,6 +441,16 @@ function VirtualTryOn({ product, onClose }) {
                         {/* Canvas for rendering */}
                         <canvas ref={canvasRef} className="render-canvas" />
 
+                        {/* 3D Watch Renderer (only for products with 3D models) */}
+                        {use3DRendering && currentLandmarks && product?.model3D && (
+                            <Watch3DRenderer
+                                landmarks={currentLandmarks}
+                                canvasRef={canvasRef}
+                                productId={product.id}
+                                modelPath={product.model3D}
+                            />
+                        )}
+
                         {/* Status Indicator */}
                         <div className="status-indicator">
                             <div className={`status-badge ${cameraActive ? 'active' : ''}`}>
@@ -418,8 +459,8 @@ function VirtualTryOn({ product, onClose }) {
                             <div className={`status-badge ${handsDetected ? 'active' : ''}`}>
                                 ✋ Hands: {handsDetected ? 'Detected' : 'Not Detected'}
                             </div>
-                            <div className={`status-badge ${watchImageLoaded ? 'active' : ''}`}>
-                                ⌚ Watch: {watchImageLoaded ? 'Loaded' : 'Loading...'}
+                            <div className={`status-badge ${watchImageLoaded || use3DRendering ? 'active' : ''}`}>
+                                ⌚ Watch: {use3DRendering ? '3D Model' : watchImageLoaded ? 'Loaded' : 'Loading...'}
                             </div>
                         </div>
 

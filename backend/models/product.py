@@ -50,6 +50,10 @@ class Product(BaseModel):
         description="All product images"
     )
     
+    # 3D Model support
+    has3DModel: Optional[bool] = Field(None, description="Whether product has a 3D model available")
+    model3D: Optional[str] = Field(None, description="Path to 3D model file (e.g., .glb)")
+    
     # Metadata
     scraped_at: Optional[datetime] = Field(
         default_factory=datetime.now,

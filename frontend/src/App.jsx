@@ -44,8 +44,8 @@ function App() {
           {/* Header */}
           <header className="app-header">
             <div className="header-content">
-              <h1>Virtual Try-On</h1>
-              <p>Find your perfect watch with AI-powered recommendations</p>
+              <h1>Titan</h1>
+              <p>Experience luxury timepieces with AI-powered recommendations and 3D virtual try-on</p>
             </div>
           </header>
 
@@ -89,7 +89,7 @@ function App() {
 
           {/* Footer */}
           <footer className="app-footer">
-            <p>Virtual Try-On POC • Built with React + FastAPI + MediaPipe</p>
+            <p>Titan • Powered by AI & 3D Technology</p>
           </footer>
         </>
       ) : (

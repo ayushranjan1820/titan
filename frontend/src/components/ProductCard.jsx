@@ -1,13 +1,13 @@
 import React from 'react';
+import ModelViewer from './ModelViewer';
 import './ProductCard.css';
 
 /**
  * ProductCard Component
- * Displays a single product with image, details, and actions
+ * Displays a single product with 3D model or image, details, and actions
  */
 function ProductCard({ product, onTryOn }) {
     const {
-        id,
         name,
         description,
         price,
@@ -16,6 +16,8 @@ function ProductCard({ product, onTryOn }) {
         image_url,
         attributes = {},
         features = [],
+        has3DModel = false,
+        model3D,
     } = product;
 
     // Format price
@@ -29,9 +31,15 @@ function ProductCard({ product, onTryOn }) {
 
     return (
         <div className="product-card">
-            {/* Product Image */}
+            {/* Product Image or 3D Model */}
             <div className="product-image-container">
-                {image_url ? (
+                {has3DModel && model3D ? (
+                    <ModelViewer
+                        modelPath={model3D}
+                        className="product-3d-model"
+                        autoRotate={true}
+                    />
+                ) : image_url ? (
                     <img
                         src={image_url}
                         alt={name}
@@ -43,6 +51,13 @@ function ProductCard({ product, onTryOn }) {
                 ) : (
                     <div className="product-image-placeholder">
                         <span>No Image</span>
+                    </div>
+                )}
+
+                {/* 3D Badge */}
+                {has3DModel && (
+                    <div className="product-3d-badge">
+                        <span>⚡ 3D</span>
                     </div>
                 )}
 
